@@ -64,7 +64,7 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-    beforeEach(function(done){      // create a user that we can then log-in with
+    xbeforeEach(function(done){      // create a user that we can then log-in with
       new User({
           'username': 'Phillip',
           'password': 'Phillip'
@@ -155,7 +155,7 @@ describe('', function() {
       var link;
 
       //beforeEach(function(done){
-        // save a link to the database
+      //  // save a link to the database
         link = new Link({
           url: 'http://roflzoo.com/',
           title: 'Funny animal pictures, funny animals, funniest dogs',
@@ -164,7 +164,6 @@ describe('', function() {
         link.save().then(function(){
           //done();
         });
-
       //});
 
       it('Returns the same shortened code', function(done) {
@@ -214,7 +213,7 @@ describe('', function() {
 
   }); // 'Link creation'
 
-  describe('Priviledged Access:', function(){
+  xdescribe('Priviledged Access:', function(){
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
       request('http://127.0.0.1:4568/', function(error, res, body) {
