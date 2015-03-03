@@ -3,14 +3,14 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 
-
 var db = require('./app/config');
 var Users = require('./app/collections/users');
 var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
-
+var cookieParser = require('cookie-parser');
+var session = require('express-session');
 var app = express();
 
 app.set('views', __dirname + '/views');
@@ -22,10 +22,21 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+app.use(cookieParser());
+app.use(session({
+  //genid: function(req) {
+  //  return uuid();
+  //},
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true
+}));
 
-app.get('/', 
+app.get('/',
 function(req, res) {
-  res.render('index');
+  restrict(req, res, function() {
+    res.render('login');
+  });
 });
 
 app.get('/create', 
@@ -78,7 +89,45 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+function restrict(req, res, next) {
+  if (req.session) {
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+}
 
+app.get('/login', function(req, res) {
+  res.render('login');
+});
+
+app.post('/login', function(req, res) {
+
+  var username = req.body.username;
+  var password = req.body.password;
+
+  if(username == 'demo' && password == 'demo'){
+    req.session.regenerate(function(){
+      req.session.user = username;
+      res.redirect('/login');
+      alert("Not allowed");
+    });
+  }
+  else {
+    res.redirect('login');
+  }
+});
+
+app.get('/logout', function(req, res){
+  req.session.destroy(function(){
+    res.redirect('/');
+  });
+});
+
+app.get('/restricted', restrict, function(request, response){
+  response.send('This is the restricted area! Hello ' + request.session.user + '! click <a href="/logout">here to logout</a>');
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
