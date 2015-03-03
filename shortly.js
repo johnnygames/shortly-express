@@ -35,20 +35,28 @@ app.use(session({
 app.get('/',
 function(req, res) {
   restrict(req, res, function() {
-    res.render('login');
+    res.render('index');
   });
 });
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+  restrict(req, res, function() {
+    res.render('index');
+  });
+  //res.render('index');
 });
 
 app.get('/links', 
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
+  restrict(req, res, function() {
+    Links.reset().fetch().then(function(links) {
+      res.send(200, links.models);
+    });
   });
+  //Links.reset().fetch().then(function(links) {
+  //  res.send(200, links.models);
+  //});
 });
 
 app.post('/links', 
@@ -90,7 +98,7 @@ function(req, res) {
 /************************************************************/
 
 function restrict(req, res, next) {
-  if (req.session) {
+  if (req.session.user) {
     next();
   } else {
     req.session.error = 'Access denied!';
