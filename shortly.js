@@ -25,9 +25,6 @@ app.use(express.static(__dirname + '/public'));
 
 app.use(cookieParser());
 app.use(session({
-  //genid: function(req) {
-  //  return uuid();
-  //},
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true
@@ -45,7 +42,6 @@ function(req, res) {
   restrict(req, res, function() {
     res.render('index');
   });
-  //res.render('index');
 });
 
 app.get('/links', 
@@ -55,9 +51,6 @@ function(req, res) {
       res.send(200, links.models);
     });
   });
-  //Links.reset().fetch().then(function(links) {
-  //  res.send(200, links.models);
-  //});
 });
 
 app.post('/links', 
@@ -117,33 +110,32 @@ app.get('/signup', function(req, res) {
   res.render('signup');
 });
 
+app.get('/logout', function(req, res) {
+  req.session.destroy(function() {
+    res.render('logout');
+  });
+});
+
 app.post('/signup', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  var user = new User({
-    'username': username,
-    'password': password
-  });
-  user.save().then(function(newUser) {
-    Users.add(newUser);
-    res.redirect('/');
-    //res.send(200);
-  });
 
-  /*
   new User({ username: username }).fetch().then(function(user) {
     if (!user) {
-      bcrypt.create({ username: username, password: hash })
-      .then(function(user) {
-        util.createSession(req, res, user);
+      var newUser = new User({
+        username: username,
+        password: password
       });
-    });
-  } else {
-    console.log('Account already exists');
-    res.redirect('/signup');
-  }
-   */
+      newUser.save().then(function(savedUser) {
+        util.createSession(req, res, savedUser);
+      });
+    } else {
+      console.log('Account already exists');
+      res.redirect('/signup');
+    }
+  });
+
 
 });
 
@@ -152,33 +144,19 @@ app.post('/login', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  Users.query("where", "username", "=", username).fetch().then(function(user) {
-    if (bcrypt.compareSync(password, user.attributes.password)) {
-      req.session.regenerate(function() {
-        req.session.user = username;
-        res.redirect('/');
-      });
-
-    } else {
-      res.render('login');
-    }
-  });
-
-  /*
   new User({ username: username }).fetch().then(function(user) {
     if (!user) {
       return res.redirect('/login');
+    } else {
+      user.comparePassword(password, function(match) {
+        if (match) {
+          util.createSession(req, res, user);
+        } else {
+          res.redirect('/login');
+        }
+      })
     }
-    bcrypt.compare(password, user.get('password'), function(err, match) {
-      if (match) {
-        util.createSession(req, res, user);
-      }else {
-        res.redirect('/login');
-      }
-    });
   });
-
-   */
 
 });
 
@@ -186,10 +164,6 @@ app.get('/logout', function(req, res){
   req.session.destroy(function(){
     res.redirect('/');
   });
-});
-
-app.get('/restricted', restrict, function(request, response){
-  response.send('This is the restricted area! Hello ' + request.session.user + '! click <a href="/logout">here to logout</a>');
 });
 
 /************************************************************/
